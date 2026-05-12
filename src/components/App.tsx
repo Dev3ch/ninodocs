@@ -78,8 +78,12 @@ export function App({ config: rootConfig }: Props) {
 
       <div class="nd-layout">
         <Sidebar config={config} rootConfig={rootConfig} />
-        <Content config={config} page={match?.page ?? null} slug={match?.slug ?? ''} />
-        <RightPanel config={config} page={match?.page ?? null} />
+        <div class="nd-scroll-area">
+          <div class="nd-scroll-grid">
+            <Content config={config} page={match?.page ?? null} slug={match?.slug ?? ''} />
+            <RightPanel config={config} page={match?.page ?? null} />
+          </div>
+        </div>
       </div>
     </div>
   );

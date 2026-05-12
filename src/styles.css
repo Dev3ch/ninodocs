@@ -215,21 +215,48 @@
    ============================================================ */
 .nd-layout {
   display: grid;
-  grid-template-columns: var(--nd-sidebar-w) minmax(0, 1fr) var(--nd-rightpanel-w);
+  grid-template-columns: var(--nd-sidebar-w) minmax(0, 1fr);
   gap: 0;
   max-width: var(--nd-max-w);
   margin: 0 auto;
   width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.nd-scroll-area {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
+  height: 100dvh;
+  scrollbar-width: thin;
+  scrollbar-color: var(--nd-border-strong) transparent;
+}
+.nd-scroll-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--nd-rightpanel-w);
+  gap: 0;
+  min-height: 100%;
+  align-items: start;
 }
 
 @media (max-width: 1180px) {
-  .nd-layout { grid-template-columns: var(--nd-sidebar-w) minmax(0, 1fr); }
+  .nd-scroll-grid { grid-template-columns: minmax(0, 1fr); }
   .nd-right { display: none; }
 }
 
 @media (max-width: 860px) {
   .nd-topbar { display: flex; }
-  .nd-layout { grid-template-columns: minmax(0, 1fr); }
+  .nd-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    overflow: visible;
+  }
+  .nd-scroll-area {
+    height: auto;
+    overflow: visible;
+  }
 }
 
 /* ============================================================
@@ -624,14 +651,19 @@
    ============================================================ */
 .nd-main {
   padding: var(--nd-s-10) var(--nd-s-10);
-  max-width: 760px;
   width: 100%;
   min-width: 0;
   overflow-x: hidden;
 }
+.nd-main > * {
+  max-width: 760px;
+  width: 100%;
+}
 
 @media (max-width: 860px) {
-  .nd-main { padding: var(--nd-s-6) var(--nd-s-4) var(--nd-s-10); }
+  .nd-main {
+    padding: var(--nd-s-6) var(--nd-s-4) var(--nd-s-10);
+  }
 }
 
 .nd-page-header {
@@ -938,16 +970,8 @@
 .nd-right {
   border-left: 1px solid var(--nd-border);
   padding: var(--nd-s-8) var(--nd-s-5);
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100dvh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--nd-border-strong) transparent;
+  min-width: 0;
 }
-.nd-right::-webkit-scrollbar { width: 6px; }
-.nd-right::-webkit-scrollbar-thumb { background: var(--nd-border-strong); border-radius: 3px; }
 
 .nd-code-card {
   background: var(--nd-bg-elevated);
