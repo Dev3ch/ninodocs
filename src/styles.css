@@ -655,7 +655,7 @@
   min-width: 0;
   overflow-x: hidden;
 }
-.nd-main > * {
+.nd-main > *:not(.nd-drawer-backdrop):not(.nd-drawer) {
   max-width: 760px;
   width: 100%;
 }
