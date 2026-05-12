@@ -1,6 +1,6 @@
 import { signal, computed } from '@preact/signals';
 import type { AuthConfig, EndpointPage, NinodocsConfig } from './types';
-import { isEndpoint } from './types';
+import { isEndpoint, resolveAuth } from './types';
 import { buildRequest, defaultValues, type BuiltRequest, type RequestValues } from './request';
 
 export interface ExecutionResult {
@@ -68,7 +68,7 @@ function endpointBaseUrl(): string {
 }
 
 function endpointAuth(): AuthConfig | undefined {
-  return currentConfig.value?.auth;
+  return resolveAuth(currentEndpoint.value, currentConfig.value?.auth);
 }
 
 export const built = computed<BuiltRequest | null>(() => {

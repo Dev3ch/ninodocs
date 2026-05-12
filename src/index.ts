@@ -1,6 +1,6 @@
 import { render, h } from 'preact';
 import { App } from './components/App';
-import { initRouter, flattenPages } from './state';
+import { initRouter, flattenPages, pickDefaultVersion, resolveVersionConfig } from './state';
 import type { NinodocsConfig } from './types';
 import './styles.css';
 
@@ -18,6 +18,7 @@ export type {
   HeaderSpec,
   BodySpec,
   ResponseSpec,
+  DocsVersion,
 } from './types';
 
 export interface MountOptions {
@@ -33,8 +34,11 @@ export function mount(opts: MountOptions): { destroy: () => void } {
       : opts.target;
   if (!el) throw new Error(`ninodocs: target not found (${String(opts.target)})`);
 
-  const first = flattenPages(opts.config)[0];
-  if (first) initRouter(first.slug);
+  const versions = opts.config.versions || [];
+  const defaultVersion = pickDefaultVersion(versions);
+  const initialConfig = resolveVersionConfig(opts.config, defaultVersion);
+  const first = flattenPages(initialConfig)[0];
+  if (first) initRouter(first.slug, defaultVersion?.id || '');
 
   document.documentElement.classList.add('nd-scroll-host');
   document.body.classList.add('nd-scroll-host');

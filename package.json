@@ -1,6 +1,6 @@
 {
   "name": "ninodocs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Beautiful, embeddable API documentation library. Drop-in interactive docs via CDN or npm — no Node required on the consumer side.",
   "type": "module",
   "license": "MIT",

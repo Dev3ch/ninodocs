@@ -1,6 +1,12 @@
 import { useEffect, useMemo } from 'preact/hooks';
 import type { NinodocsConfig } from '../types';
-import { currentSlug, flattenPages, sidebarOpen } from '../state';
+import {
+  currentSlug,
+  currentVersionId,
+  flattenPages,
+  resolveVersionConfig,
+  sidebarOpen,
+} from '../state';
 import { isEndpoint } from '../types';
 import { syncEndpoint } from '../requestStore';
 import { Sidebar } from './Sidebar';
@@ -12,7 +18,17 @@ interface Props {
   config: NinodocsConfig;
 }
 
-export function App({ config }: Props) {
+export function App({ config: rootConfig }: Props) {
+  const versionId = currentVersionId.value;
+  const activeVersion = useMemo(() => {
+    const vs = rootConfig.versions || [];
+    return vs.find((v) => v.id === versionId) || null;
+  }, [rootConfig, versionId]);
+  const config = useMemo(
+    () => resolveVersionConfig(rootConfig, activeVersion),
+    [rootConfig, activeVersion],
+  );
+
   const flat = useMemo(() => flattenPages(config), [config]);
   const slug = currentSlug.value;
   const match = flat.find((p) => p.slug === slug) || flat[0] || null;
@@ -61,7 +77,7 @@ export function App({ config }: Props) {
       />
 
       <div class="nd-layout">
-        <Sidebar config={config} />
+        <Sidebar config={config} rootConfig={rootConfig} />
         <Content config={config} page={match?.page ?? null} slug={match?.slug ?? ''} />
         <RightPanel config={config} page={match?.page ?? null} />
       </div>

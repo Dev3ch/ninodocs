@@ -4,6 +4,22 @@ All notable changes to **ninodocs** are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-05-12
+
+### Added
+
+- **Per-endpoint auth override** — `EndpointPage` now accepts an `auth` field. Set `auth: { type: 'none' }` to opt out of the global Bearer/API-key config on public endpoints like `/auth/login` or `/health`. The Authorization field disappears from the drawer and the `Authorization` header is no longer injected into cURL / JS / Python samples. Helper `resolveAuth(endpoint, globalAuth)` is exported for advanced usage.
+- **Documentation versions** — `config.versions: DocsVersion[]` lets you ship multiple API versions side-by-side. Each version has its own `sidebar`, `baseUrl`, `auth`, etc., merged on top of the root config. The sidebar renders a **Version** selector at the top; the active version is remembered in `localStorage` (`ninodocs:version`) and reflected in the URL hash (`#/v=v1/posts/listar-posts`), so users can link to a specific version. The selected version persists between reloads.
+- New exported types: `DocsVersion`.
+
+### Fixed
+
+- Prose markdown spacing — headings (`h2`, `h3`, `h4`), code blocks, blockquotes and lists now have proper top/bottom margins so paragraphs no longer feel glued together.
+
+### Notes
+
+- Both changes are **fully backward compatible**: existing configs without `auth` per endpoint or without `versions` keep working exactly as before.
+
 ## [1.0.0] — 2026-05-12
 
 First stable release.

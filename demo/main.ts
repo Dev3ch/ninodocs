@@ -5,10 +5,63 @@ mount({
   config: {
     title: 'ninodocs',
     description:
-      'Documentación de API embebible e interactiva — sin Node, sin SaaS, sin build step en el consumidor. v1.0.0',
+      'Documentación de API embebible e interactiva — sin Node, sin SaaS, sin build step en el consumidor. v1.0.1',
     baseUrl: 'https://jsonplaceholder.typicode.com',
     theme: { mode: 'dark', primary: '#22c55e' },
     auth: { type: 'bearer', label: 'Bearer token' },
+    versions: [
+      {
+        id: 'v1',
+        label: 'v1.0',
+        badge: 'current',
+        current: true,
+        config: { baseUrl: 'https://jsonplaceholder.typicode.com' },
+      },
+      {
+        id: 'v0',
+        label: 'v0.9',
+        badge: 'legacy',
+        config: {
+          baseUrl: 'https://jsonplaceholder.typicode.com',
+          sidebar: [
+            {
+              group: 'Empezar',
+              pages: [
+                {
+                  title: 'Migración a v1',
+                  content: `Esta es la versión heredada de la API. **Recomendamos migrar a v1.0** para acceder a nuevos campos y mejor performance.
+
+### Diferencias principales
+
+- v1 incluye \`createdAt\` en las respuestas de \`/posts\`.
+- v1 soporta \`?_limit\` y \`?_offset\` (paginación nativa).
+- v1 acepta \`Bearer\` tokens; v0 usaba API key.
+`,
+                },
+              ],
+            },
+            {
+              group: 'Posts',
+              pages: [
+                {
+                  title: 'Listar posts (v0)',
+                  method: 'GET',
+                  path: '/posts',
+                  content: 'Endpoint legacy — devuelve la lista de posts sin paginación.',
+                  responses: [
+                    {
+                      status: 200,
+                      description: 'OK',
+                      example: [{ id: 1, userId: 1, title: '…', body: '…' }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
     sidebar: [
       {
         group: 'Empezar',
@@ -57,6 +110,37 @@ curl --header 'Authorization: Bearer YOUR_TOKEN' https://api.example.com/me
 
 > Pega tu token en el panel derecho y ejecuta cualquier endpoint para probarlo.
 `,
+          },
+        ],
+      },
+      {
+        group: 'Auth',
+        pages: [
+          {
+            title: 'Login',
+            method: 'POST',
+            path: '/auth/login',
+            auth: { type: 'none' },
+            body: {
+              contentType: 'application/json',
+              example: { email: 'user@example.com', password: '••••••••' },
+            },
+            content: `Endpoint **público** — no requiere autenticación. Devuelve un \`access_token\` que se usa en endpoints protegidos.
+
+> Este endpoint declara \`auth: { type: 'none' }\` y por eso no muestra el campo Authorization.
+`,
+            responses: [
+              {
+                status: 200,
+                description: 'OK',
+                example: { access_token: 'eyJhbGciOi…', expires_in: 3600 },
+              },
+              {
+                status: 401,
+                description: 'Credenciales inválidas',
+                example: { error: 'invalid_credentials' },
+              },
+            ],
           },
         ],
       },

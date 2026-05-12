@@ -68,6 +68,11 @@ export interface EndpointPage extends PageBase {
   path: string;
   /** Optional override of the global baseUrl. */
   baseUrl?: string;
+  /**
+   * Per-endpoint auth override. Set to `{ type: 'none' }` for public endpoints
+   * (login, signup, health checks). When omitted, the global `config.auth` applies.
+   */
+  auth?: AuthConfig;
   /** Path parameters, matched against `{name}` placeholders in `path`. */
   params?: ParamSpec[];
   /** Query string parameters. */
@@ -97,8 +102,43 @@ export interface NinodocsConfig {
   sidebar: SidebarGroup[];
   /** Footer links (optional). */
   footer?: { label: string; href: string }[];
+  /**
+   * Documentation versions. Each version has its own sidebar/endpoints/baseUrl.
+   * When set, a version selector appears in the sidebar. The active version is
+   * remembered in localStorage and reflected in the URL hash (`#v=<id>/...`).
+   */
+  versions?: DocsVersion[];
+}
+
+export interface DocsVersion {
+  /** Stable identifier used in URLs and localStorage (e.g. `v1`, `2024-08`). */
+  id: string;
+  /** Display label (e.g. `v1.0`, `Stable`, `2024-08`). */
+  label: string;
+  /** Optional short tag rendered next to the label (e.g. `current`, `deprecated`). */
+  badge?: string;
+  /** Marks this version as the default when no other has been selected. */
+  current?: boolean;
+  /**
+   * Per-version overrides. The root config is used as the base, and any field
+   * here overrides it (sidebar, baseUrl, auth, title, etc.).
+   */
+  config: Partial<Omit<NinodocsConfig, 'versions'>>;
 }
 
 export function isEndpoint(page: Page): page is EndpointPage {
   return typeof (page as EndpointPage).method === 'string';
+}
+
+/**
+ * Resolve the effective auth for an endpoint:
+ * the endpoint's own `auth` if defined, otherwise the global one.
+ * Returns `undefined` only when neither is set.
+ */
+export function resolveAuth(
+  endpoint: EndpointPage | null,
+  global: AuthConfig | undefined,
+): AuthConfig | undefined {
+  if (endpoint && endpoint.auth) return endpoint.auth;
+  return global;
 }

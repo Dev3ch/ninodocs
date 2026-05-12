@@ -23,6 +23,8 @@ Beautiful, embeddable API documentation. Drop-in interactive docs via **CDN** or
 
 ### Via CDN (no build step)
 
+You don't host anything. As soon as the package is published to npm, jsDelivr and unpkg serve it automatically at predictable URLs:
+
 ```html
 <div id="docs"></div>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ninodocs@1/dist/ninodocs.css" />
@@ -53,6 +55,17 @@ Beautiful, embeddable API documentation. Drop-in interactive docs via **CDN** or
   });
 </script>
 ```
+
+**CDN URL patterns:**
+
+| Pin to…              | Example                                                           | When to use                                       |
+| -------------------- | ----------------------------------------------------------------- | ------------------------------------------------- |
+| Major version (`@1`) | `https://cdn.jsdelivr.net/npm/ninodocs@1/+esm`                    | Recommended. Auto-updates within v1.x.            |
+| Minor (`@1.0`)       | `https://cdn.jsdelivr.net/npm/ninodocs@1.0/+esm`                  | Auto-updates only patches (e.g. 1.0.1 → 1.0.2).   |
+| Exact (`@1.0.1`)     | `https://cdn.jsdelivr.net/npm/ninodocs@1.0.1/+esm`                | Reproducible — never changes.                     |
+| Latest               | `https://cdn.jsdelivr.net/npm/ninodocs/+esm`                      | Always the newest. Not recommended for prod.      |
+
+unpkg works the same way: `https://unpkg.com/ninodocs@1/dist/ninodocs.js`.
 
 ### Via npm
 
@@ -104,6 +117,67 @@ The full schema is exported as `NinodocsConfig`. Key fields:
   content: 'Markdown description…',
 }
 ```
+
+### Public endpoints (opt out of global auth)
+
+By default every endpoint inherits the global `config.auth`. For public endpoints like `/auth/login` or `/health`, declare `auth: { type: 'none' }` on the page itself:
+
+```ts
+{
+  title: 'Login',
+  method: 'POST',
+  path: '/auth/login',
+  auth: { type: 'none' },          // ← removes the Authorization input + header
+  body: {
+    contentType: 'application/json',
+    example: { email: 'user@example.com', password: '••••••••' },
+  },
+}
+```
+
+The Authorization field disappears from the Try-it drawer and the `Authorization` header is no longer injected into the cURL / JS / Python samples.
+
+You can also override the auth scheme per-endpoint (e.g. an endpoint that uses Basic auth while the rest of the API uses Bearer) — just pass any `AuthConfig` shape.
+
+### Documentation versions
+
+Ship multiple API versions side-by-side with `config.versions`. Each version is a partial override of the root config:
+
+```ts
+mount({
+  target: '#docs',
+  config: {
+    title: 'My API',
+    baseUrl: 'https://api.example.com',
+    sidebar: [/* v1 sidebar (default) */],
+    versions: [
+      {
+        id: 'v1',
+        label: 'v1.0',
+        badge: 'current',
+        current: true,
+        config: { baseUrl: 'https://api.example.com/v1' },
+      },
+      {
+        id: 'v0',
+        label: 'v0.9',
+        badge: 'legacy',
+        config: {
+          baseUrl: 'https://api.example.com/v0',
+          sidebar: [/* legacy sidebar */],
+        },
+      },
+    ],
+  },
+});
+```
+
+What you get:
+
+- A **Version** selector at the top of the sidebar.
+- The active version is **persisted in `localStorage`** (`ninodocs:version`).
+- The URL hash includes the version (`#/v=v1/posts/list-posts`), so links are shareable and reproducible.
+- Each version can override `sidebar`, `baseUrl`, `auth`, `title` — anything except `versions` itself.
 
 ### Theming
 

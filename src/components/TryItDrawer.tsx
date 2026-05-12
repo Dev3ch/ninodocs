@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { EndpointPage, NinodocsConfig, ParamSpec } from '../types';
+import { resolveAuth } from '../types';
 import { methodHasBody, substitutePath } from '../request';
 import {
   built,
@@ -81,7 +82,7 @@ export function TryItDrawer({ config, endpoint, open, onClose }: Props) {
     }
   };
 
-  const auth = config.auth;
+  const auth = resolveAuth(endpoint, config.auth);
   const visibleHeaders = (endpoint.headers || []).filter((h) => !h.hidden);
   const showBody = methodHasBody(endpoint.method) && !!endpoint.body;
 

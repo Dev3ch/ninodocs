@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import type { BodySpec, EndpointPage, NinodocsConfig, ParamSpec } from '../types';
+import { resolveAuth } from '../types';
 import { methodHasBody } from '../request';
 import { CodeBlock } from './CodeBlock';
 
@@ -9,7 +10,7 @@ interface Props {
 }
 
 export function ParamsDoc({ config, endpoint }: Props) {
-  const auth = config.auth;
+  const auth = resolveAuth(endpoint, config.auth);
   const visibleHeaders = (endpoint.headers || []).filter((h) => !h.hidden);
   const showBody = methodHasBody(endpoint.method) && !!endpoint.body;
 
