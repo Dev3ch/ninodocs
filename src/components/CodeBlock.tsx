@@ -21,11 +21,7 @@ export function CodeBlock({ code, lang, mode = 'dark' }: Props) {
   }, [code, lang, mode]);
 
   if (!html) {
-    return (
-      <pre>
-        <code>{code}</code>
-      </pre>
-    );
+    return <pre class="nd-code-fallback">{code}</pre>;
   }
   return <div class="nd-code-body" dangerouslySetInnerHTML={{ __html: html }} />;
 }

@@ -3,6 +3,7 @@ import type { NinodocsConfig, Page } from '../types';
 import { isEndpoint } from '../types';
 import { CodeBlock } from './CodeBlock';
 import { curlSample, jsSample, pythonSample } from '../samples';
+import { IconCheck, IconCopy, IconPlay } from './icons';
 
 interface Props {
   config: NinodocsConfig;
@@ -20,8 +21,10 @@ const LANGS: { id: Lang; label: string; shiki: string }[] = [
 export function RightPanel({ config, page }: Props) {
   const [lang, setLang] = useState<Lang>('curl');
   const [token, setToken] = useState('');
-  const [response, setResponse] = useState<string | null>(null);
+  const [response, setResponse] = useState<{ status: number; body: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const themeMode = config.theme?.mode === 'light' ? 'light' : 'dark';
 
   if (!page || !isEndpoint(page)) {
     return <aside class="nd-right" />;
@@ -46,8 +49,7 @@ export function RightPanel({ config, page }: Props) {
       if (config.auth.type === 'bearer') headers['Authorization'] = `Bearer ${token}`;
       else if (config.auth.type === 'apiKey')
         headers[config.auth.headerName || 'X-API-Key'] = token;
-      else if (config.auth.type === 'basic')
-        headers['Authorization'] = `Basic ${token}`;
+      else if (config.auth.type === 'basic') headers['Authorization'] = `Basic ${token}`;
     }
     try {
       const r = await fetch(`${baseUrl}${page.path}`, {
@@ -55,28 +57,40 @@ export function RightPanel({ config, page }: Props) {
         headers,
       });
       const txt = await r.text();
+      let body = txt;
       try {
-        setResponse(JSON.stringify(JSON.parse(txt), null, 2));
+        body = JSON.stringify(JSON.parse(txt), null, 2);
       } catch {
-        setResponse(txt);
+        /* not JSON, keep raw */
       }
+      setResponse({ status: r.status, body });
     } catch (err) {
-      setResponse(`Error: ${(err as Error).message}`);
+      setResponse({ status: 0, body: `Error: ${(err as Error).message}` });
     } finally {
       setLoading(false);
     }
   };
 
-  const copy = () => navigator.clipboard?.writeText(sample);
+  const copy = async () => {
+    try {
+      await navigator.clipboard?.writeText(sample);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    } catch {
+      /* noop */
+    }
+  };
 
   return (
-    <aside class="nd-right">
+    <aside class="nd-right" aria-label="Request panel">
       <div class="nd-code-card">
         <div class="nd-code-header">
-          <div class="nd-tabs">
+          <div class="nd-tabs" role="tablist">
             {LANGS.map((l) => (
               <button
                 key={l.id}
+                role="tab"
+                aria-selected={lang === l.id}
                 class={`nd-tab ${lang === l.id ? 'active' : ''}`}
                 onClick={() => setLang(l.id)}
               >
@@ -84,40 +98,64 @@ export function RightPanel({ config, page }: Props) {
               </button>
             ))}
           </div>
-          <button class="nd-copy-btn" onClick={copy}>
-            Copy
+          <button
+            class={`nd-icon-btn ${copied ? 'copied' : ''}`}
+            onClick={copy}
+            aria-label="Copy code"
+            title={copied ? 'Copied!' : 'Copy'}
+          >
+            {copied ? <IconCheck /> : <IconCopy />}
           </button>
         </div>
-        <CodeBlock code={sample} lang={langMeta.shiki} />
+        <CodeBlock code={sample} lang={langMeta.shiki} mode={themeMode} />
       </div>
 
-      {config.auth && config.auth.type !== 'none' && (
-        <div class="nd-try">
-          <label
-            style={{
-              display: 'block',
-              fontSize: 12,
-              color: 'var(--nd-muted, var(--color-nd-muted))',
-              marginBottom: 6,
-            }}
-          >
-            {config.auth.label || 'Token'}
-          </label>
-          <input
-            class="nd-input"
-            type="password"
-            value={token}
-            placeholder="paste token…"
-            onInput={(e) => setToken((e.target as HTMLInputElement).value)}
-          />
+      <div class="nd-try">
+        <div class="nd-try-title">Try it</div>
+
+        {config.auth && config.auth.type !== 'none' && (
+          <>
+            <label class="nd-label" for="nd-token">
+              {config.auth.label || 'Token'}
+            </label>
+            <input
+              id="nd-token"
+              class="nd-input"
+              type="password"
+              autocomplete="off"
+              value={token}
+              placeholder="Paste your token…"
+              onInput={(e) => setToken((e.target as HTMLInputElement).value)}
+            />
+          </>
+        )}
+
+        <button class="nd-btn" onClick={execute} disabled={loading}>
+          {loading ? (
+            <>Sending…</>
+          ) : (
+            <>
+              <IconPlay /> Send {page.method}
+            </>
+          )}
+        </button>
+      </div>
+
+      {response && (
+        <div class="nd-response-card">
+          <div class="nd-code-header">
+            <span class="nd-try-title" style={{ margin: 0 }}>
+              Response
+            </span>
+            <span
+              class={`nd-status-pill ${response.status >= 200 && response.status < 400 ? 'ok' : 'err'}`}
+            >
+              {response.status || 'ERR'}
+            </span>
+          </div>
+          <pre>{response.body}</pre>
         </div>
       )}
-
-      <button class="nd-btn" onClick={execute} disabled={loading}>
-        {loading ? 'Sending…' : `Send ${page.method}`}
-      </button>
-
-      {response !== null && <pre class="nd-response">{response}</pre>}
     </aside>
   );
 }

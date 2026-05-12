@@ -1,11 +1,6 @@
 import { signal } from '@preact/signals';
 import type { NinodocsConfig, Page } from './types';
 
-export interface AppState {
-  config: NinodocsConfig;
-  currentPath: string;
-}
-
 function slugify(s: string): string {
   return s
     .toLowerCase()
@@ -19,10 +14,14 @@ export function pageSlug(group: string, page: Page): string {
   return `${slugify(group)}/${slugify(page.title)}`;
 }
 
-export function flattenPages(
-  config: NinodocsConfig,
-): { group: string; page: Page; slug: string }[] {
-  const out: { group: string; page: Page; slug: string }[] = [];
+export interface FlatEntry {
+  group: string;
+  page: Page;
+  slug: string;
+}
+
+export function flattenPages(config: NinodocsConfig): FlatEntry[] {
+  const out: FlatEntry[] = [];
   for (const g of config.sidebar) {
     for (const p of g.pages) {
       out.push({ group: g.group, page: p, slug: pageSlug(g.group, p) });
@@ -32,6 +31,8 @@ export function flattenPages(
 }
 
 export const currentSlug = signal<string>(readHash());
+export const searchQuery = signal<string>('');
+export const sidebarOpen = signal<boolean>(false);
 
 function readHash(): string {
   if (typeof window === 'undefined') return '';
@@ -42,6 +43,7 @@ export function initRouter(defaultSlug: string) {
   if (!currentSlug.value) currentSlug.value = defaultSlug;
   window.addEventListener('hashchange', () => {
     currentSlug.value = readHash() || defaultSlug;
+    sidebarOpen.value = false;
   });
 }
 
