@@ -25,12 +25,59 @@ export interface PageBase {
   content?: string;
 }
 
+export type ParamType = 'string' | 'integer' | 'number' | 'boolean';
+
+export interface ParamSpec {
+  name: string;
+  type?: ParamType;
+  required?: boolean;
+  description?: string;
+  /** Default/example value shown in the input. */
+  example?: string | number | boolean;
+  /** For enums. */
+  enum?: (string | number)[];
+}
+
+export interface HeaderSpec extends ParamSpec {
+  /** When true, hide from the auto-generated samples (e.g. computed elsewhere). */
+  hidden?: boolean;
+}
+
+export interface BodySpec {
+  /** `application/json` is the default. */
+  contentType?: string;
+  /** Pretty example used to prefill the editor. */
+  example?: unknown;
+  description?: string;
+}
+
+export interface ResponseSpec {
+  /** HTTP status code, e.g. 200, 404. */
+  status: number;
+  /** Short label shown next to the status (e.g. "OK", "Not found"). */
+  description?: string;
+  /** Example payload — object/array (rendered as JSON) or raw string. */
+  example?: unknown;
+  /** Defaults to `application/json`. */
+  contentType?: string;
+}
+
 export interface EndpointPage extends PageBase {
   method: HttpMethod;
   /** Path relative to `baseUrl`, e.g. `/clients/{id}` */
   path: string;
   /** Optional override of the global baseUrl. */
   baseUrl?: string;
+  /** Path parameters, matched against `{name}` placeholders in `path`. */
+  params?: ParamSpec[];
+  /** Query string parameters. */
+  query?: ParamSpec[];
+  /** Custom headers (besides auth + content-type). */
+  headers?: HeaderSpec[];
+  /** Request body (for POST/PUT/PATCH). */
+  body?: BodySpec;
+  /** Documented responses (success + errors). */
+  responses?: ResponseSpec[];
 }
 
 export type Page = PageBase | EndpointPage;

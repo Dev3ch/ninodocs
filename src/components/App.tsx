@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from 'preact/hooks';
 import type { NinodocsConfig } from '../types';
 import { currentSlug, flattenPages, sidebarOpen } from '../state';
+import { isEndpoint } from '../types';
+import { syncEndpoint } from '../requestStore';
 import { Sidebar } from './Sidebar';
 import { Content } from './Content';
 import { RightPanel } from './RightPanel';
@@ -15,6 +17,9 @@ export function App({ config }: Props) {
   const slug = currentSlug.value;
   const match = flat.find((p) => p.slug === slug) || flat[0] || null;
   const themeClass = config.theme?.mode === 'light' ? 'nd-light' : '';
+
+  const endpoint = match?.page && isEndpoint(match.page) ? match.page : null;
+  syncEndpoint(config, endpoint);
 
   const styleVars = config.theme?.primary
     ? ({

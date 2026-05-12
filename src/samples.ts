@@ -1,56 +1,46 @@
-import type { AuthConfig, EndpointPage } from './types';
+import type { BuiltRequest } from './request';
 
-interface SampleInput {
-  endpoint: EndpointPage;
-  baseUrl: string;
-  auth?: AuthConfig;
-  token?: string;
+function shellEscape(s: string): string {
+  return s.replace(/'/g, `'\\''`);
 }
 
-function authHeaderTuple(auth: AuthConfig | undefined, token: string | undefined): [string, string] | null {
-  if (!auth || auth.type === 'none' || !token) return null;
-  if (auth.type === 'bearer') return ['Authorization', `Bearer ${token}`];
-  if (auth.type === 'apiKey') return [auth.headerName || 'X-API-Key', token];
-  if (auth.type === 'basic') return ['Authorization', `Basic ${token}`];
-  return null;
-}
-
-export function curlSample({ endpoint, baseUrl, auth, token }: SampleInput): string {
-  const url = `${baseUrl}${endpoint.path}`;
-  const lines = [`curl --request ${endpoint.method} \\`, `  --url ${url}`];
-  const h = authHeaderTuple(auth, token);
-  if (h) lines.push(`  --header '${h[0]}: ${h[1]}'`);
-  if (endpoint.method !== 'GET' && endpoint.method !== 'HEAD') {
-    lines.push(`  --header 'Content-Type: application/json'`);
+export function curlSample(req: BuiltRequest): string {
+  const lines = [`curl --request ${req.method} \\`, `  --url '${shellEscape(req.url)}'`];
+  for (const [k, v] of Object.entries(req.headers)) {
+    lines.push(`  --header '${shellEscape(`${k}: ${v}`)}'`);
+  }
+  if (req.body != null) {
+    lines.push(`  --data '${shellEscape(req.body)}'`);
   }
   return lines.join(' \\\n').replace(/ \\\n$/, '');
 }
 
-export function jsSample({ endpoint, baseUrl, auth, token }: SampleInput): string {
-  const url = `${baseUrl}${endpoint.path}`;
-  const headers: Record<string, string> = {};
-  const h = authHeaderTuple(auth, token);
-  if (h) headers[h[0]] = h[1];
-  if (endpoint.method !== 'GET' && endpoint.method !== 'HEAD') {
-    headers['Content-Type'] = 'application/json';
-  }
-  return `const res = await fetch('${url}', {
-  method: '${endpoint.method}',
-  headers: ${JSON.stringify(headers, null, 2)},
-});
+export function jsSample(req: BuiltRequest): string {
+  const init: Record<string, unknown> = {
+    method: req.method,
+    headers: req.headers,
+  };
+  if (req.body != null) init.body = req.body;
+  return `const res = await fetch(${JSON.stringify(req.url)}, ${JSON.stringify(init, null, 2)});
 const data = await res.json();`;
 }
 
-export function pythonSample({ endpoint, baseUrl, auth, token }: SampleInput): string {
-  const url = `${baseUrl}${endpoint.path}`;
-  const h = authHeaderTuple(auth, token);
-  const headers: Record<string, string> = {};
-  if (h) headers[h[0]] = h[1];
-  return `import requests
-
-response = requests.${endpoint.method.toLowerCase()}(
-    "${url}",
-    headers=${JSON.stringify(headers)},
-)
-print(response.json())`;
+export function pythonSample(req: BuiltRequest): string {
+  const headers = JSON.stringify(req.headers, null, 4).replace(/\n/g, '\n    ');
+  const fn = req.method.toLowerCase();
+  const lines = [`import requests`, ``, `response = requests.${fn}(`, `    "${req.url}",`];
+  if (Object.keys(req.headers).length) lines.push(`    headers=${headers},`);
+  if (req.body != null) {
+    let dataLine: string;
+    try {
+      const parsed = JSON.parse(req.body);
+      const json = JSON.stringify(parsed, null, 4).replace(/\n/g, '\n    ');
+      dataLine = `    json=${json},`;
+    } catch {
+      dataLine = `    data=${JSON.stringify(req.body)},`;
+    }
+    lines.push(dataLine);
+  }
+  lines.push(`)`, `print(response.json())`);
+  return lines.join('\n');
 }

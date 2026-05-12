@@ -13,6 +13,11 @@ export type {
   EndpointPage,
   HttpMethod,
   ThemeMode,
+  ParamSpec,
+  ParamType,
+  HeaderSpec,
+  BodySpec,
+  ResponseSpec,
 } from './types';
 
 export interface MountOptions {
@@ -31,11 +36,16 @@ export function mount(opts: MountOptions): { destroy: () => void } {
   const first = flattenPages(opts.config)[0];
   if (first) initRouter(first.slug);
 
+  document.documentElement.classList.add('nd-scroll-host');
+  document.body.classList.add('nd-scroll-host');
+
   render(h(App, { config: opts.config }), el);
 
   return {
     destroy() {
       render(null, el);
+      document.documentElement.classList.remove('nd-scroll-host');
+      document.body.classList.remove('nd-scroll-host');
     },
   };
 }

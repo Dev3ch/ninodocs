@@ -1,7 +1,7 @@
 {
   "name": "ninodocs",
-  "version": "0.1.0",
-  "description": "Beautiful, embeddable API documentation library. Mintlify-style docs via CDN or npm — no Node required on the consumer side.",
+  "version": "1.0.0",
+  "description": "Beautiful, embeddable API documentation library. Drop-in interactive docs via CDN or npm — no Node required on the consumer side.",
   "type": "module",
   "license": "MIT",
   "author": "Enrique Chavez <developer@dev3ch.com>",
@@ -10,7 +10,8 @@
     "docs",
     "api-docs",
     "markdown",
-    "mintlify",
+    "interactive-docs",
+    "openapi",
     "preact",
     "cdn"
   ],
@@ -29,9 +30,16 @@
     },
     "./style.css": "./dist/ninodocs.css"
   },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

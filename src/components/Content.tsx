@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'preact/hooks';
-import type { NinodocsConfig, Page } from '../types';
+import { useEffect, useMemo, useState } from 'preact/hooks';
+import type { NinodocsConfig, Page, ResponseSpec } from '../types';
 import { isEndpoint } from '../types';
 import { loadMarkdown, renderMarkdown } from '../markdown';
 import { flattenPages, navigate } from '../state';
 import { IconArrowLeft, IconArrowRight } from './icons';
+import { EndpointBar } from './EndpointBar';
+import { ParamsDoc } from './ParamsDoc';
+import { TryItDrawer } from './TryItDrawer';
+import { CodeBlock } from './CodeBlock';
 
 interface Props {
   config: NinodocsConfig;
@@ -13,6 +17,13 @@ interface Props {
 
 export function Content({ config, page, slug }: Props) {
   const [html, setHtml] = useState<string>('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const endpoint = page && isEndpoint(page) ? page : null;
+
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [endpoint]);
 
   useEffect(() => {
     if (!page) {
@@ -55,15 +66,19 @@ export function Content({ config, page, slug }: Props) {
       <header class="nd-page-header">
         {groupName && <div class="nd-page-eyebrow">{groupName}</div>}
         <h1 class="nd-page-title">{page.title}</h1>
-        {isEndpoint(page) && (
-          <div class="nd-endpoint-bar" role="group" aria-label="HTTP endpoint">
-            <span class={`nd-method ${page.method}`}>{page.method}</span>
-            <span class="nd-endpoint-path">{page.path}</span>
-          </div>
-        )}
       </header>
 
+      {endpoint && (
+        <EndpointBar config={config} endpoint={endpoint} onOpen={() => setDrawerOpen(true)} />
+      )}
+
       <article class="nd-prose" dangerouslySetInnerHTML={{ __html: html }} />
+
+      {endpoint && <ParamsDoc config={config} endpoint={endpoint} />}
+
+      {endpoint && endpoint.responses && endpoint.responses.length > 0 && (
+        <ResponsesSection responses={endpoint.responses} />
+      )}
 
       {(prev || next) && (
         <nav class="nd-page-nav" aria-label="Page navigation">
@@ -103,6 +118,68 @@ export function Content({ config, page, slug }: Props) {
           )}
         </nav>
       )}
+
+      {endpoint && (
+        <TryItDrawer
+          config={config}
+          endpoint={endpoint}
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        />
+      )}
     </main>
+  );
+}
+
+function statusClass(status: number): string {
+  if (status >= 200 && status < 300) return 'ok';
+  if (status >= 300 && status < 400) return 'redir';
+  if (status >= 400 && status < 500) return 'cli';
+  if (status >= 500) return 'srv';
+  return 'meta';
+}
+
+function formatExample(r: ResponseSpec): string {
+  if (r.example === undefined) return '';
+  if (typeof r.example === 'string') return r.example;
+  try {
+    return JSON.stringify(r.example, null, 2);
+  } catch {
+    return String(r.example);
+  }
+}
+
+function ResponsesSection({ responses }: { responses: ResponseSpec[] }) {
+  const sorted = useMemo(() => [...responses].sort((a, b) => a.status - b.status), [responses]);
+  const [active, setActive] = useState<number>(sorted[0]?.status ?? 0);
+  const current = sorted.find((r) => r.status === active) ?? sorted[0];
+  if (!current) return null;
+  const example = formatExample(current);
+
+  return (
+    <section class="nd-responses" aria-label="Responses">
+      <h2 class="nd-responses-title">Responses</h2>
+      <div class="nd-responses-tabs" role="tablist">
+        {sorted.map((r) => (
+          <button
+            key={r.status}
+            role="tab"
+            aria-selected={r.status === active}
+            class={`nd-responses-tab ${r.status === active ? 'active' : ''}`}
+            onClick={() => setActive(r.status)}
+          >
+            <span class={`nd-status-pill ${statusClass(r.status)}`}>{r.status}</span>
+            {r.description && <span class="nd-responses-desc">{r.description}</span>}
+          </button>
+        ))}
+      </div>
+      {example ? (
+        <div class="nd-responses-body-wrap">
+          <CodeBlock code={example} lang="json" />
+        </div>
+      ) : (
+        <p class="nd-responses-empty">Sin payload de ejemplo.</p>
+      )}
+    </section>
   );
 }
