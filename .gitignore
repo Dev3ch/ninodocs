@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-demo
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+.yarn-state.yml
+.DS_Store
+.vscode
+.idea
+*.log
+*.tsbuildinfo
