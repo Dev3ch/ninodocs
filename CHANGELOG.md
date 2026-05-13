@@ -4,6 +4,12 @@ All notable changes to **ninodocs** are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] — 2026-05-13
+
+### Fixed
+
+- **Republish of the 1.0.3 backdrop fix** — `1.0.3` was tagged with the CSS source fix but the published `dist/ninodocs.css` on npm/jsdelivr still contained the pre-fix build, so consumers loading the CDN bundle kept seeing the half-width backdrop. This release ships a freshly built `dist/` so `.nd-main > :not(.nd-drawer-backdrop):not(.nd-drawer)` actually reaches the published artifact. No source changes vs. 1.0.3.
+
 ## [1.0.3] — 2026-05-12
 
 ### Fixed
